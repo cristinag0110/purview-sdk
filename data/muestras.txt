@@ -1,0 +1,33 @@
+# Muestras de texto para probar el cliente del Purview SDK (DLP).
+#
+# FORMATO (para que lo lea el script en Python y en Bash/PowerShell):
+#   - Las líneas vacías se ignoran.
+#   - Las líneas que empiezan por '#' son comentarios y se ignoran.
+#   - Cada línea restante es UN texto que se enviará a processContent.
+#
+# Los números de tarjeta usados son números de PRUEBA estándar (pasan el checksum de Luhn
+# pero NO son tarjetas reales). Sirven para disparar el Sensitive Information Type
+# "credit card number" de la política DLP.
+#
+# ============================================================================
+# BLOQUE 1 — DEBEN HACER MATCH (contienen nº de tarjeta -> policyActions: block)
+# ============================================================================
+
+Mi número de tarjeta de crédito es 4111 1111 1111 1111, guárdalo por favor.
+Cárgalo a la Visa 4532667785213500 antes del viernes.
+Pago con Mastercard 5555 5555 5555 4444 confirmado.
+Tarjeta American Express: 3782 822463 10005 a nombre de Alex Wilber.
+Usa la Discover 6011 1111 1111 1117 para la suscripción anual.
+Datos de pago del cliente: 4012 8888 8888 1881, caducidad 05/28.
+
+# ============================================================================
+# BLOQUE 2 — NO HACEN MATCH (sin datos sensibles de tarjeta), pero SÍ son
+# auditables por Purview (contentActivities -> Activity Explorer / DSPM / Audit)
+# ============================================================================
+
+Resume el informe trimestral de ventas de la región EMEA.
+¿Cuál es el estado del proyecto Contoso para la próxima release?
+Redacta un correo de bienvenida para el nuevo empleado del equipo de marketing.
+Necesito una lista de tareas pendientes para la reunión del lunes.
+Traduce al inglés el siguiente párrafo sobre la política de vacaciones.
+El pedido 4587 se entregará en el almacén central de Madrid.
