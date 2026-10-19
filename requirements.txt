@@ -1,6 +1,6 @@
-# Cliente Purview DLP — dependencias directas
-# Instalar en el venv:  .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+# Purview DLP Client — Direct Dependencies
+# Install in the venv:  .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 
-azure-identity==1.25.3   # Autenticación a Microsoft Graph (ClientSecretCredential)
-httpx==0.28.1            # Llamadas REST a las Purview APIs de Graph (beta)
-python-dotenv==1.2.3     # Carga de variables desde .env
+azure-identity==1.25.3   # Authentication with Microsoft Graph (ClientSecretCredential)
+httpx==0.28.1            # REST Calls to the Graph Purview APIs (beta)
+python-dotenv==1.2.3     # Loading variables from .env
