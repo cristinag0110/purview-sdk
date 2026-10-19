@@ -1,31 +1,31 @@
 # purview-sdk
 
-Proyecto de exploración de las capacidades del **"Purview SDK"** aplicadas a la protección de datos,
-concretamente a la **Data Loss Prevention (DLP)** sobre texto.
+A project to explore the capabilities of the **“Purview SDK”** as applied to data protection,
+specifically **Data Loss Prevention (DLP)** for text.
 
-## Objetivo del repositorio
+## Repository objective
 
-Construir un **cliente** (uno en **Python** y otro en **Bash/PowerShell**) al que se le pueda pasar
-un texto y que responda si ese texto **hace match o no** con una **política DLP** de Microsoft Purview,
-devolviendo además las **acciones** que la política determina (bloquear, auditar, etc.).
+Build a **client** (one in **Python** and another in **Bash/PowerShell**) that can be passed
+a text string and that determines whether that text **matches or does not match** a Microsoft Purview **DLP policy**,
+while also returning the **actions** specified by the policy (block, audit, etc.).
 
-Es un proyecto de exploración: prioriza entender el funcionamiento de las APIs frente a construir un
-producto cerrado.
+This is an exploration project. Its primary purpose is to understand and demonstrate the APIs and 
+integration flow rather than provide a production-ready solution.
 
-## Qué es (y qué no es) el "Purview SDK"
+## What the “Purview SDK” Is (and Isn't)
 
-El nombre induce a error: **no existe una librería instalable** llamada "Purview SDK". Lo que Microsoft
-llama así es un **conjunto de llamadas REST a Microsoft Graph**, bajo la ruta
-`/dataSecurityAndGovernance`. No se instala con `pip`; se **invoca por HTTP**.
+The name is misleading: **there is no installable library** called “Purview SDK.” What Microsoft
+calls that is a **set of REST calls to Microsoft Graph**, under the path
+`/dataSecurityAndGovernance`. It is not installed with `pip`; it is **invoked via HTTP**.
 
-Por eso el cliente solo necesita utilidades genéricas:
+That's why the client only needs generic utilities:
 
-- **azure-identity** — obtener el token (`ClientSecretCredential`).
-- **httpx** — hacer las llamadas REST a Graph (beta).
-- **python-dotenv** — cargar la configuración desde `.env`.
+- **azure-identity** — obtain the token (`ClientSecretCredential`).
+- **httpx** — make REST calls to Graph (beta).
+- **python-dotenv** — load the configuration from `.env`.
 
-> No confundir con el paquete PyPI `azure-purview-*` (catálogo / scanning / gobernanza del *data map*),
-> que **no** sirve para evaluar DLP de texto.
+> Do not confuse this with the PyPI package `azure-purview-*` (catalog / scanning / *data map* governance),
+> which **is not** used for text DLP evaluation.
 
 ## Las llamadas de Graph utilizadas y su objetivo
 
