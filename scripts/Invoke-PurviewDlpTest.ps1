@@ -128,8 +128,9 @@ try {
         Write-Warning 'No se devolvieron protection scopes: puede que ninguna politica aplique a este usuario+app, o que aun no se haya propagado.'
     }
 } catch {
-    Write-Warning "protectionScopes/compute fallo: $($_.Exception.Message)"
+    
 }
+
 
 # --- 2) Evaluar cada muestra con processContent ---
 function Get-Verdict {
@@ -147,11 +148,14 @@ $results = @()
 $i = 0
 foreach ($text in $samples) {
     $i++
+
+    $plainText = $text.ToString()
+    
     $now = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss')
     $entry = @{
         '@odata.type'    = 'microsoft.graph.processConversationMetadata'
         identifier       = [guid]::NewGuid().ToString()
-        content          = @{ '@odata.type' = 'microsoft.graph.textContent'; data = $text }
+        content          = @{ '@odata.type' = 'microsoft.graph.textContent'; data = $plaintext }
         name             = 'purview-sdk PowerShell test'
         correlationId    = [guid]::NewGuid().ToString()
         sequenceNumber   = 0
@@ -160,40 +164,86 @@ foreach ($text in $samples) {
         modifiedDateTime = $now
         contentCategory  = 'ai'
     }
-    $payload = @{
-        contentToProcess = @{
-            contentEntries       = @($entry)
-            activityMetadata     = @{ activity = 'uploadText' }
-            protectedAppMetadata = @{
-                name                = $appName
-                version             = $appVersion
-                applicationLocation = @{ '@odata.type' = 'microsoft.graph.policyLocationApplication'; value = $appLocation }
+    
+
+$payloadObject = @{
+    contentToProcess = @{
+        contentEntries       = @($entry)
+        activityMetadata     = @{ activity = 'uploadText' }
+        protectedAppMetadata = @{
+            name                = $appName
+            version             = $appVersion
+            applicationLocation = @{
+                '@odata.type' = 'microsoft.graph.policyLocationApplication'
+                value         = $appLocation
             }
-            integratedAppMetadata = @{ name = $appName; version = $appVersion }
         }
-    } | ConvertTo-Json -Depth 12
+        integratedAppMetadata = @{
+            name    = $appName
+            version = $appVersion
+        }
+    }
+}
+
+
+
+$payload = $payloadObject | ConvertTo-Json -Depth 6 -Compress
+
 
     $callHeaders = $headers.Clone()
-    if ($etag) { $callHeaders['If-None-Match'] = $etag }
 
-    $short = if ($text.Length -gt 60) { $text.Substring(0, 60) + '...' } else { $text }
+
+    if ($etag) { $callHeaders['If-None-Match'] = $etag }
+    
+   
+    
+    $short = if ($text.Length -gt 60) { $text.Substring(0, 60) + '...' } else { $plaintext }
+    
+    
+    
     try {
-        $resp = Invoke-RestMethod -Method Post -Uri "$dsg/processContent" `
-            -Headers $callHeaders -Body $payload -ContentType 'application/json'
+
+
+    $resp = Invoke-RestMethod -Method Post -Uri "$dsg/processContent" `
+        -Headers $callHeaders `
+        -Body $payload `
+        -ContentType 'application/json' `
+        -TimeoutSec 30
+        
         $verdict = Get-Verdict -PolicyActions $resp.policyActions
         $color = if ($verdict -eq 'NO MATCH') { 'Green' } else { 'Red' }
         Write-Host ("[{0,2}] {1,-12} | {2}" -f $i, $verdict, $short) -ForegroundColor $color
         $results += [pscustomobject]@{ N = $i; Verdict = $verdict; Text = $short }
     } catch {
-        $status = $null
-        if ($_.Exception.Response) { $status = [int]$_.Exception.Response.StatusCode }
-        if ($status -eq 402) {
-            Write-Host ("[{0,2}] ERROR 402   | {1}" -f $i, 'Pay-as-you-go no configurado (Payment Required)') -ForegroundColor Yellow
-        } else {
-            Write-Host ("[{0,2}] ERROR {1}    | {2}" -f $i, $status, $_.Exception.Message) -ForegroundColor Yellow
+    $status = $null
+    $errorBody = $null
+
+    if ($_.Exception.Response) {
+        $status = [int]$_.Exception.Response.StatusCode
+
+        try {
+            $stream = $_.Exception.Response.GetResponseStream()
+            $reader = New-Object System.IO.StreamReader($stream)
+            $errorBody = $reader.ReadToEnd()
+            $reader.Dispose()
         }
-        $results += [pscustomobject]@{ N = $i; Verdict = "ERROR $status"; Text = $short }
+        catch {
+            $errorBody = "No se pudo leer el cuerpo del error"
+        }
     }
+
+    Write-Host ("[{0,2}] ERROR {1} | {2}" -f $i, $status, $short) -ForegroundColor Yellow
+    Write-Host "Respuesta Graph: $errorBody" -ForegroundColor Red
+
+    $results += [pscustomobject]@{
+        N       = $i
+        Verdict = "ERROR $status"
+        Text    = $short
+    }
+
+    break
+}
+
 }
 
 # --- Resumen ---
